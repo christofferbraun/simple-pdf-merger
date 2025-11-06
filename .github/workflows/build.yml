@@ -1,0 +1,23 @@
+# .github/workflows/build.yml
+name: Build Executables
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+    - run: pip install pyinstaller PyPDF2
+    - run: pyinstaller --onefile --windowed pdf_merger.py
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.os }}-executable
+        path: dist/*
