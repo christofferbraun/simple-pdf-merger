@@ -17,4 +17,4 @@ for pdf in pdfs:
 output = folder / f"{folder.name}_MERGED.pdf"
 merger.write(str(output))
 merger.close()
-print(f"Merged {len(pdfs)} PDFs into: {output}")
+print(f"Merged {len(pdfs)} PDFs into: {output}\nOrder: {', '.join(p.name for p in pdfs)}")
