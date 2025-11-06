@@ -37,3 +37,42 @@ python pdf_merger.py
 - Files without numbers are placed at the end
 - Output files contain `_MERGED` identifier to prevent inclusion in future merges
 - The merge order is printed to console for verification
+
+## Developer Info
+
+### GitHub Actions Setup
+
+This project uses GitHub Actions to automatically build executables for Windows, macOS, and Linux.
+
+**Workflow file location:** `.github/workflows/build.yml`
+
+The workflow:
+- Builds executables on every push to main/master
+- Creates GitHub releases with all executables when a version tag is pushed
+- Runs on all three platforms simultaneously
+
+### Creating a Release
+
+To create a new release with executables:
+
+1. Commit and push your changes:
+```bash
+git add .
+git commit -m "Your commit message"
+git push
+```
+
+2. Create and push a version tag:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+3. GitHub Actions will automatically:
+   - Build executables for Windows, macOS, and Linux
+   - Create a new release on GitHub
+   - Attach all three executables to the release
+
+4. View your release at: `https://github.com/YOUR_USERNAME/YOUR_REPO/releases`
+
+**Tag naming convention:** Use semantic versioning (e.g., `v1.0.0`, `v1.1.0`, `v2.0.0`)
