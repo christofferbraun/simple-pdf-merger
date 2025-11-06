@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from tkinter import filedialog, Tk
+from tkinter import filedialog, Tk, messagebox
 from PyPDF2 import PdfMerger
 
 root = Tk()
@@ -20,4 +20,6 @@ for pdf in pdfs:
 output = folder / f"{folder.name}_MERGED.pdf"
 merger.write(str(output))
 merger.close()
-print(f"Merged {len(pdfs)} PDFs into: {output}\nOrder: {', '.join(p.name for p in pdfs)}")
+message = f"Merged {len(pdfs)} PDFs into:\n{output.name}\n\nOrder:\n" + "\n".join(p.name for p in pdfs)
+print(message)
+messagebox.showinfo("Merge Complete", message)
