@@ -5,9 +5,9 @@ A simple Python script that merges all PDF files in a selected folder into a sin
 ## Download
 
 **Don't want to install Python?** Download the ready-to-use executable for your operating system from the [Releases page](../../releases/latest):
-- Windows: `simple-pdf-merger.exe`
-- macOS: `simple-pdf-merger` (Mac)
-- Linux: `simple-pdf-merger` (Linux)
+- Windows: `simple-pdf-merger-windows.exe`
+- macOS: `simple-pdf-merger-mac`
+- Linux: `simple-pdf-merger-linux`
 
 Just download and run - no installation required!
 
