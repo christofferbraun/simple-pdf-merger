@@ -29,10 +29,13 @@ jobs:
     - run: pip install pyinstaller PyPDF2
     - name: Build Windows
       if: matrix.os == 'windows-latest'
-      run: pyinstaller --onefile --windowed simple-pdf-merger.py
-    - name: Build Linux/Mac
-      if: matrix.os != 'windows-latest'
-      run: pyinstaller --onefile simple-pdf-merger.py
+      run: pyinstaller --onefile --windowed --name simple-pdf-merger-windows simple-pdf-merger.py
+    - name: Build Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: pyinstaller --onefile --name simple-pdf-merger-linux simple-pdf-merger.py
+    - name: Build Mac
+      if: matrix.os == 'macos-latest'
+      run: pyinstaller --onefile --name simple-pdf-merger-mac simple-pdf-merger.py
     - uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.os }}-executable
