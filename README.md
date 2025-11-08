@@ -22,11 +22,12 @@ Just download and run - no installation required!
 
 - Python 3.6+
 - PyPDF2 library
+- customtkinter library
 
 ## Installation
 
 ```bash
-pip install PyPDF2
+pip install PyPDF2 customtkinter
 ```
 
 ## Usage
