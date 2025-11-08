@@ -1,9 +1,9 @@
 import customtkinter as ctk
 
 def reorder_pdfs(pdfs):
-    """Show a modern GUI to reorder PDFs with drag and drop. Returns reordered list or None if cancelled."""
+    """Show a modern GUI to reorder PDFs with keyboard controls. Returns reordered list or None if cancelled."""
     result = {'pdfs': None}
-    drag_data = {'index': None, 'start_y': 0}
+    selected_index = [0]  # Use list to allow modification in nested functions
     items = []
     
     def create_pdf_card(parent, text, index):
@@ -18,61 +18,74 @@ def reorder_pdfs(pdfs):
         label = ctk.CTkLabel(content, text=text, font=("Arial", 11), anchor="w")
         label.pack(side="left", fill="x", expand=True)
         
-        drag_icon = ctk.CTkLabel(content, text="⋮⋮", font=("Arial", 16), text_color=("#999999", "#666666"))
-        drag_icon.pack(side="right", padx=(10, 0))
+        number_label = ctk.CTkLabel(content, text=f"#{index+1}", font=("Arial", 10, "bold"), 
+                                    text_color=("#999999", "#666666"), width=40)
+        number_label.pack(side="right", padx=(10, 0))
         
-        # Store index in frame
         frame.pdf_index = index
         
-        # Bind events to all widgets
-        for widget in [frame, content, label, drag_icon]:
-            widget.bind('<Enter>', lambda e, f=frame: on_hover(f, True))
-            widget.bind('<Leave>', lambda e, f=frame: on_hover(f, False))
-            widget.bind('<Button-1>', lambda e, f=frame: on_drag_start(e, f))
-            widget.bind('<B1-Motion>', lambda e: on_drag_motion(e))
-            widget.bind('<ButtonRelease-1>', lambda e: on_drag_release(e))
+        # Click to select
+        for widget in [frame, content, label, number_label]:
+            widget.bind('<Button-1>', lambda e, idx=index: select_item(idx))
         
         return frame
     
-    def on_hover(frame, entering):
-        if drag_data['index'] is None:
-            if entering:
-                frame.configure(border_color=("#4CAF50", "#66BB6A"))
+    def select_item(index):
+        selected_index[0] = index
+        update_selection()
+    
+    def update_selection():
+        for i, item in enumerate(items):
+            if i == selected_index[0]:
+                item.configure(border_color=("#4CAF50", "#66BB6A"), border_width=3)
+                item.configure(fg_color=("#e8f5e9", "#1b5e20"))
             else:
-                frame.configure(border_color=("#e0e0e0", "#3f3f3f"))
+                item.configure(border_color=("#e0e0e0", "#3f3f3f"), border_width=2)
+                item.configure(fg_color=("#ffffff", "#2b2b2b"))
     
-    def on_drag_start(event, frame):
-        drag_data['index'] = frame.pdf_index
-        drag_data['start_y'] = event.y_root
-        frame.configure(border_color=("#4CAF50", "#66BB6A"), border_width=3)
-        for item in items:
-            item.configure(fg_color=("#ffffff", "#2b2b2b"))
-    
-    def on_drag_motion(event):
-        if drag_data['index'] is not None:
-            delta = event.y_root - drag_data['start_y']
+    def move_up(event=None):
+        idx = selected_index[0]
+        if idx > 0:
+            # Swap
+            pdfs[idx], pdfs[idx-1] = pdfs[idx-1], pdfs[idx]
+            selected_index[0] = idx - 1
             
-            if abs(delta) > 30:  # Threshold for swapping
-                current_idx = drag_data['index']
-                
-                if delta > 0 and current_idx < len(pdfs) - 1:  # Moving down
-                    pdfs[current_idx], pdfs[current_idx + 1] = pdfs[current_idx + 1], pdfs[current_idx]
-                    drag_data['index'] = current_idx + 1
-                    drag_data['start_y'] = event.y_root
-                    update_list()
-                    items[drag_data['index']].configure(border_width=3, border_color=("#4CAF50", "#66BB6A"))
-                    
-                elif delta < 0 and current_idx > 0:  # Moving up
-                    pdfs[current_idx], pdfs[current_idx - 1] = pdfs[current_idx - 1], pdfs[current_idx]
-                    drag_data['index'] = current_idx - 1
-                    drag_data['start_y'] = event.y_root
-                    update_list()
-                    items[drag_data['index']].configure(border_width=3, border_color=("#4CAF50", "#66BB6A"))
+            # Animate
+            items[idx].configure(fg_color=("#f0f0f0", "#3a3a3a"))
+            items[idx-1].configure(fg_color=("#f0f0f0", "#3a3a3a"))
+            
+            root.after(100, update_list)
     
-    def on_drag_release(event):
-        if drag_data['index'] is not None:
-            items[drag_data['index']].configure(border_width=2, border_color=("#e0e0e0", "#3f3f3f"))
-            drag_data['index'] = None
+    def move_down(event=None):
+        idx = selected_index[0]
+        if idx < len(pdfs) - 1:
+            # Swap
+            pdfs[idx], pdfs[idx+1] = pdfs[idx+1], pdfs[idx]
+            selected_index[0] = idx + 1
+            
+            # Animate
+            items[idx].configure(fg_color=("#f0f0f0", "#3a3a3a"))
+            items[idx+1].configure(fg_color=("#f0f0f0", "#3a3a3a"))
+            
+            root.after(100, update_list)
+    
+    def navigate_up(event=None):
+        if selected_index[0] > 0:
+            selected_index[0] -= 1
+            update_selection()
+            scroll_to_selected()
+    
+    def navigate_down(event=None):
+        if selected_index[0] < len(pdfs) - 1:
+            selected_index[0] += 1
+            update_selection()
+            scroll_to_selected()
+    
+    def scroll_to_selected():
+        """Scroll to keep selected item visible"""
+        if items and selected_index[0] < len(items):
+            item = items[selected_index[0]]
+            scrollable_frame._parent_canvas.yview_moveto(selected_index[0] / len(items))
     
     def update_list():
         for item in items:
@@ -80,9 +93,10 @@ def reorder_pdfs(pdfs):
         items.clear()
         
         for i, pdf in enumerate(pdfs):
-            card = create_pdf_card(scrollable_frame, f"{i+1}. {pdf.name}", i)
+            card = create_pdf_card(scrollable_frame, f"{pdf.name}", i)
             items.append(card)
         
+        update_selection()
         scrollable_frame.update_idletasks()
     
     def on_mousewheel(event):
@@ -90,12 +104,27 @@ def reorder_pdfs(pdfs):
     
     def confirm():
         result['pdfs'] = pdfs.copy()
-        root.quit()
-        root.destroy()
+        cleanup_and_close()
     
     def cancel():
-        root.quit()
-        root.destroy()
+        cleanup_and_close()
+    
+    def cleanup_and_close():
+        try:
+            scrollable_frame.unbind_all("<MouseWheel>")
+            root.unbind_all("<Up>")
+            root.unbind_all("<Down>")
+            root.unbind_all("<Control-Up>")
+            root.unbind_all("<Control-Down>")
+            root.after(10, lambda: None)
+            root.quit()
+        except:
+            pass
+        finally:
+            try:
+                root.destroy()
+            except:
+                pass
     
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("green")
@@ -107,15 +136,35 @@ def reorder_pdfs(pdfs):
     header = ctk.CTkLabel(root, text="📄 Reorder Your PDFs", font=("Arial", 20, "bold"))
     header.pack(pady=(20, 5))
     
-    instruction = ctk.CTkLabel(root, text="Drag items up or down to reorder", 
+    instruction = ctk.CTkLabel(root, text="Click to select • ↑/↓ to navigate • Ctrl+↑/↓ to move", 
                               font=("Arial", 11), text_color=("#666666", "#999999"))
-    instruction.pack(pady=(0, 20))
+    instruction.pack(pady=(0, 15))
+    
+    # Keyboard shortcuts display
+    shortcuts_frame = ctk.CTkFrame(root, fg_color="transparent")
+    shortcuts_frame.pack(pady=(0, 10))
+    
+    ctk.CTkLabel(shortcuts_frame, text="⌨️", font=("Arial", 14)).pack(side="left", padx=(0, 5))
+    ctk.CTkLabel(shortcuts_frame, text="Ctrl+↑", font=("Courier", 10, "bold"), 
+                fg_color=("#e0e0e0", "#3f3f3f"), corner_radius=5, padx=8, pady=2).pack(side="left", padx=2)
+    ctk.CTkLabel(shortcuts_frame, text="Move Up", font=("Arial", 9), 
+                text_color=("#666666", "#999999")).pack(side="left", padx=(2, 10))
+    
+    ctk.CTkLabel(shortcuts_frame, text="Ctrl+↓", font=("Courier", 10, "bold"),
+                fg_color=("#e0e0e0", "#3f3f3f"), corner_radius=5, padx=8, pady=2).pack(side="left", padx=2)
+    ctk.CTkLabel(shortcuts_frame, text="Move Down", font=("Arial", 9),
+                text_color=("#666666", "#999999")).pack(side="left", padx=2)
     
     scrollable_frame = ctk.CTkScrollableFrame(root, fg_color="transparent")
     scrollable_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
     
-    # Enable mousewheel scrolling
     scrollable_frame.bind_all("<MouseWheel>", on_mousewheel)
+    
+    # Keyboard bindings
+    root.bind("<Up>", navigate_up)
+    root.bind("<Down>", navigate_down)
+    root.bind("<Control-Up>", move_up)
+    root.bind("<Control-Down>", move_down)
     
     update_list()
     
