@@ -26,16 +26,16 @@ jobs:
     - name: Install tkinter on Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -y python3-tk
-    - run: pip install pyinstaller PyPDF2
+    - run: pip install pyinstaller PyPDF2 customtkinter
     - name: Build Windows
       if: matrix.os == 'windows-latest'
-      run: pyinstaller --onefile --windowed --name simple-pdf-merger-windows simple-pdf-merger.py
+      run: pyinstaller --onefile --windowed --hidden-import=pdf_reorder_gui --name simple-pdf-merger-windows simple-pdf-merger.py
     - name: Build Linux
       if: matrix.os == 'ubuntu-latest'
-      run: pyinstaller --onefile --name simple-pdf-merger-linux simple-pdf-merger.py
+      run: pyinstaller --onefile --hidden-import=pdf_reorder_gui --name simple-pdf-merger-linux simple-pdf-merger.py
     - name: Build Mac
       if: matrix.os == 'macos-latest'
-      run: pyinstaller --onefile --name simple-pdf-merger-mac simple-pdf-merger.py
+      run: pyinstaller --onefile --hidden-import=pdf_reorder_gui --name simple-pdf-merger-mac simple-pdf-merger.py
     - uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.os }}-executable
